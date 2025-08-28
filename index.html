@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ABIERTO</title>
+  <style>
+    /* Load custom font */
+    @font-face {
+      font-family: 'CustomFont';
+      src: url('assets/font.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* Apply font globally */
+    * {
+      font-family: 'CustomFont', Arial, sans-serif;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    /* Splash Screen Video */
+    #splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #splash video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* show entire video */
+      background: black;
+    }
+
+    /* Main Container */
+    #main {
+      display: none;
+      padding: 30px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    h1 {
+      font-size: 42px;
+      margin-top: 20px;
+      margin-bottom: 80px; /* push buttons downward */
+    }
+
+    .btn {
+      background: white;
+      color: black;
+      border: none;
+      padding: 14px 30px;
+      margin: 20px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .input-box {
+      display: block;
+      width: 280px;
+      padding: 12px;
+      margin: 12px auto;
+      border: none;
+      border-radius: 6px;
+      background: white;
+      color: black;
+      font-size: 16px;
+    }
+
+    .form-section {
+      display: none;
+      margin-top: 40px;
+    }
+
+    /* Founder footer */
+    footer {
+      margin-top: 50px;
+      padding: 20px;
+      font-size: 16px;
+    }
+    footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Splash screen with video -->
+  <div id="splash">
+    <video autoplay muted playsinline>
+      <source src="assets/intro.mp4" type="video/mp4">
+      Your browser does not support video.
+    </video>
+  </div>
+
+  <!-- Main portal -->
+  <div id="main">
+    <div>
+      <h1>ABIERTO</h1>
+      <button class="btn" onclick="showCreate()">Create Portal</button>
+      <button class="btn" onclick="showTeleport()">Teleport</button>
+
+      <!-- Create Portal -->
+      <div id="createSection" class="form-section">
+        <h2>Create Portal</h2>
+        <input class="input-box" id="createId" placeholder="Portal ID (alphanumeric)">
+        <input class="input-box" id="createPass" placeholder="Password" type="password">
+        <input class="input-box" id="createLink" placeholder="Enter Link (URL)">
+        <button class="btn" onclick="createPortal()">Save Portal</button>
+        <p id="createMsg"></p>
+      </div>
+
+      <!-- Teleport -->
+      <div id="teleportSection" class="form-section">
+        <h2>Teleport</h2>
+        <input class="input-box" id="teleportId" placeholder="Portal ID">
+        <input class="input-box" id="teleportPass" placeholder="Password" type="password">
+        <button class="btn" onclick="teleport()">Teleport</button>
+        <p id="teleportMsg"></p>
+      </div>
+    </div>
+
+    <!-- Founder Footer -->
+    <footer>
+      Founder: <a href="https://www.instagram.com/balaji_vibe16?utm_source=qr&igsh=MXZtd3Zkc2RmZHUzdQ==" target="_blank">@balaji_vibe16</a>
+    </footer>
+  </div>
+
+  <script>
+    // Hide splash after 5 sec
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('main').style.display = 'flex';
+    }, 5000);
+
+    // Store portals locally (simulation)
+    let portals = {};
+
+    function showCreate() {
+      document.getElementById('createSection').style.display = 'block';
+      document.getElementById('teleportSection').style.display = 'none';
+    }
+    function showTeleport() {
+      document.getElementById('teleportSection').style.display = 'block';
+      document.getElementById('createSection').style.display = 'none';
+    }
+
+    // Create portal
+    async function createPortal() {
+      const id = document.getElementById('createId').value.trim();
+      const pass = document.getElementById('createPass').value.trim();
+      const link = document.getElementById('createLink').value.trim();
+      const msg = document.getElementById('createMsg');
+
+      if (!id || !pass || !link) {
+        msg.textContent = "Please fill all fields.";
+        return;
+      }
+
+      try {
+        // Call TinyURL API to shorten
+        let res = await fetch(`https://api.tinyurl.com/create`, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer My8L4ro98CLjPUPkBjTqVyUBjgmZgk0IUstBxAGwSk7Eb2mp7OLnU75ATa2e",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ url: link })
+        });
+
+        let data = await res.json();
+        if (!data.data || !data.data.tiny_url) {
+          msg.textContent = "Error creating short link.";
+          return;
+        }
+
+        // Save alias secretly
+        portals[id] = { password: pass, link: data.data.tiny_url };
+        msg.textContent = "Portal created successfully!";
+      } catch (err) {
+        msg.textContent = "API Error: " + err;
+      }
+    }
+
+    // Teleport
+    function teleport() {
+      const id = document.getElementById('teleportId').value.trim();
+      const pass = document.getElementById('teleportPass').value.trim();
+      const msg = document.getElementById('teleportMsg');
+
+      if (portals[id] && portals[id].password === pass) {
+        window.location.href = portals[id].link;
+      } else {
+        msg.textContent = "Invalid ID or Password.";
+      }
+    }
+  </script>
+</body>
+</html>
